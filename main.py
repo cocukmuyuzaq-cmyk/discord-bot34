@@ -7,6 +7,8 @@ import random
 import json
 import aiohttp
 from datetime import datetime, timedelta
+from http.server import HTTPServer, BaseHTTPRequestHandler
+import threading
 
 # ============================================================
 # TOKEN - RENDER ENVIRONMENT (ENV) DEĞİŞKENİNDEN ALMA
@@ -149,6 +151,31 @@ def increment_count(interaction):
     if user_id in data:
         data[user_id]['count'] = data[user_id].get('count', 0) + 1
         save_user_data(data)
+
+# ============================================================
+# WEB SUNUCUSU (Render için)
+# ============================================================
+
+class Handler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(b'Bot is running!')
+
+    def log_message(self, format, *args):
+        pass
+
+def run_webserver():
+    try:
+        port = int(os.environ.get('PORT', 10000))
+        server = HTTPServer(('0.0.0.0', port), Handler)
+        print(f'🌐 Web sunucusu {port} portunda çalışıyor')
+        server.serve_forever()
+    except Exception as e:
+        print(f'⚠️ Web sunucusu başlatılamadı: {e}')
+
+# Web sunucusunu ayrı bir thread'de başlat
+threading.Thread(target=run_webserver, daemon=True).start()
 
 # ============================================================
 # BOT
