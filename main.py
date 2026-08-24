@@ -12,7 +12,7 @@ from datetime import datetime, timedelta
 # TOKEN - SABİT YAZILI (RENDER'DAN ALMA)
 # ============================================================
 
-TOKEN = "MTUzMzQ2NDk2Mjg4MDc3MDIwOQ.GPkodu.5KwkUqhRaCKk1hPJU9Q7qXDR2XoKmm60R01icA"
+TOKEN = "MTUzMzQ2NDk2Mjg4MDc3MDIwOQ.GWQGKZ.5gRq-IHixDRvyhkXwALel3gTjNwuwPVcUAgglA"
 
 if not TOKEN:
     print("❌ HATA: Token boş!")
