@@ -9,13 +9,13 @@ import aiohttp
 from datetime import datetime, timedelta
 
 # ============================================================
-# TOKEN - RENDER ENVIRONMENT VARIABLE'DAN AL
+# TOKEN - SABİT YAZILI (RENDER'DAN ALMA)
 # ============================================================
 
-TOKEN = os.getenv('DISCORD_TOKEN')
+TOKEN = "MTUzMzQ2NDk2Mjg4MDc3MDIwOQ.GPkodu.5KwkUqhRaCKk1hPJU9Q7qXDR2XoKmm60R01icA"
 
 if not TOKEN:
-    print("❌ HATA: DISCORD_TOKEN bulunamadı! Render Environment Variables'a ekle.")
+    print("❌ HATA: Token boş!")
     sys.exit(1)
 
 print("✅ Token alındı!")
@@ -37,13 +37,18 @@ ROLE_5_PER_DAY = 1539562464377839656
 user_data_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'user_data.json')
 
 # ============================================================
-# STEAM HESAPLARI (SADECE TEST İÇİN 3 TANE)
+# STEAM HESAPLARI
 # ============================================================
 
 steam_accounts = [
     {'user': 'gbjmu99702', 'pass': 'mrt12518', 'game': 'ARK: Survival Ascended'},
     {'user': 'KathleenJools', 'pass': 'Kathleen3527', 'game': "Marvel's Spider-Man Remastered"},
     {'user': 'zfccv56213', 'pass': 'Garethbale11!', 'game': 'Windrose'},
+    {'user': 'de_derekch', 'pass': 'OPvj3*all2(4Aqq', 'game': 'BeamNG.drive'},
+    {'user': 'ordinaryrhinoceros6358', 'pass': 'a8ef32a3b76effb41!aZ', 'game': 'Stray'},
+    {'user': 'ydtdo32097', 'pass': 'PzIf3P1GXw2dEJ', 'game': 'MECCHA CHAMELEON'},
+    {'user': 'Cu98721', 'pass': 'Tam0768838298@@', 'game': 'Subnautica 2'},
+    {'user': 'flsge218009', 'pass': 'QoYyB497464', 'game': 'Escape from Tarkov'},
 ]
 
 # ============================================================
