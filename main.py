@@ -9,16 +9,16 @@ import aiohttp
 from datetime import datetime, timedelta
 
 # ============================================================
-# TOKEN - SABİT YAZILI (RENDER'DAN ALMA)
+# TOKEN - RENDER ENVIRONMENT (ENV) DEĞİŞKENİNDEN ALMA
 # ============================================================
 
-TOKEN = "MTUzMzQ2NDk2Mjg4MDc3MDIwOQ.GWQGKZ.5gRq-IHixDRvyhkXwALel3gTjNwuwPVcUAgglA"
+TOKEN = os.getenv('TOKEN')
 
 if not TOKEN:
-    print("❌ HATA: Token boş!")
+    print("❌ HATA: Token boş veya .env / Render Environment üzerinde tanımlanmamış!")
     sys.exit(1)
 
-print("✅ Token alındı!")
+print("✅ Token başarıyla alındı!")
 
 VOUCH_CHANNEL_ID = 1541375320853192774
 
@@ -255,7 +255,7 @@ async def steam(interaction: discord.Interaction):
     if role_type == '5_per_day':
         remaining = 5 - user_data['count']
         embed.add_field(name='⏳ Kalan Hak', value=f'{remaining} hesap', inline=True)
-        embed.add_field(name='⏰ Bekleme', value='2 saat aralıkla', inline=True)
+        embed.add_field(name='⏱️ Bekleme', value='2 saat aralıkla', inline=True)
     elif role_type == '1_per_day':
         remaining = 1 - user_data['count']
         embed.add_field(name='⏳ Kalan Hak', value=f'{remaining} hesap', inline=True)
@@ -362,16 +362,16 @@ async def on_interaction(interaction: discord.Interaction):
                     hours = int(remaining.total_seconds() // 3600)
                     minutes = int((remaining.total_seconds() % 3600) // 60)
                     embed.add_field(name='⏳ Bekleme Süresi', value=f'{hours} saat {minutes} dakika', inline=True)
-                    embed.add_field(name='⏰ Durum', value='❌ Beklemede', inline=True)
+                    embed.add_field(name='⏱️ Durum', value='❌ Beklemede', inline=True)
                 else:
                     embed.add_field(name='✅ Durum', value='Hazır! Hesap alabilirsin.', inline=True)
             elif role_type == '1_per_day':
                 if user_data['count'] >= 1:
-                    embed.add_field(name='⏰ Durum', value='❌ Bugünlük bitti. Yarın dene!', inline=True)
+                    embed.add_field(name='⏱️ Durum', value='❌ Bugünlük bitti. Yarın dene!', inline=True)
                 else:
-                    embed.add_field(name='⏰ Durum', value='✅ Hazır! Hesap alabilirsin.', inline=True)
+                    embed.add_field(name='⏱️ Durum', value='✅ Hazır! Hesap alabilirsin.', inline=True)
             elif role_type == 'unlimited':
-                embed.add_field(name='⏰ Durum', value='✅ Her zaman hazır!', inline=True)
+                embed.add_field(name='⏱️ Durum', value='✅ Her zaman hazır!', inline=True)
             
             embed.set_footer(text=f'Toplam {len(steam_accounts)} hesap mevcut')
             await interaction.response.send_message(embed=embed, ephemeral=True)
