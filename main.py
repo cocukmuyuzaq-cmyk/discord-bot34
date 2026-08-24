@@ -8,175 +8,42 @@ import json
 import aiohttp
 from datetime import datetime, timedelta
 
-print("🐍 Python version:", sys.version)
-print("📁 Current directory:", os.getcwd())
-print("📄 Files:", os.listdir())
+# ============================================================
+# TOKEN - RENDER ENVIRONMENT VARIABLE'DAN AL
+# ============================================================
 
 TOKEN = os.getenv('DISCORD_TOKEN')
 
 if not TOKEN:
-    print("❌ HATA: DISCORD_TOKEN bulunamadı!")
+    print("❌ HATA: DISCORD_TOKEN bulunamadı! Render Environment Variables'a ekle.")
     sys.exit(1)
 
 print("✅ Token alındı!")
 
 VOUCH_CHANNEL_ID = 1541375320853192774
 
-# Rol ID'leri
+# ============================================================
+# ROL ID'LERİ
+# ============================================================
+
 ROLE_UNLIMITED = 1539170674986319912
 ROLE_1_PER_DAY = 1539170716715585557
 ROLE_5_PER_DAY = 1539562464377839656
 
+# ============================================================
+# VERİ DOSYASI
+# ============================================================
+
 user_data_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'user_data.json')
 
-# HESAPLAR (KISALTILMIŞ)
+# ============================================================
+# STEAM HESAPLARI (SADECE TEST İÇİN 3 TANE)
+# ============================================================
+
 steam_accounts = [
     {'user': 'gbjmu99702', 'pass': 'mrt12518', 'game': 'ARK: Survival Ascended'},
     {'user': 'KathleenJools', 'pass': 'Kathleen3527', 'game': "Marvel's Spider-Man Remastered"},
     {'user': 'zfccv56213', 'pass': 'Garethbale11!', 'game': 'Windrose'},
-    {'user': 'de_derekch', 'pass': 'OPvj3*all2(4Aqq', 'game': 'BeamNG.drive'},
-    {'user': 'ordinaryrhinoceros6358', 'pass': 'a8ef32a3b76effb41!aZ', 'game': 'Stray'},
-    {'user': 'ydtdo32097', 'pass': 'PzIf3P1GXw2dEJ', 'game': 'MECCHA CHAMELEON'},
-    {'user': 'Cu98721', 'pass': 'Tam0768838298@@', 'game': 'Subnautica 2'},
-    {'user': 'flsge218009', 'pass': 'QoYyB497464', 'game': 'Escape from Tarkov'},
-    {'user': '23817635', 'pass': 'alfmxldps!11018', 'game': 'Grand Theft Auto V Legacy'},
-    {'user': 'cmjp18153', 'pass': 'Tedandfr@123', 'game': 'Grand Theft Auto V Legacy'},
-    {'user': 'perseguini1', 'pass': 'Nazinhomarques@199626', 'game': 'Grand Theft Auto V Legacy'},
-    {'user': 'GTAVPremiium2', 'pass': 'GtA654347$234', 'game': 'Grand Theft Auto V Legacy'},
-    {'user': 'msfaraz69', 'pass': 'blj55566', 'game': 'Grand Theft Auto V Legacy'},
-    {'user': 'phuwadon46', 'pass': '0986375820As', 'game': 'Grand Theft Auto V Legacy'},
-    {'user': 'taltb554', 'pass': 'uxtz68036IT', 'game': 'Grand Theft Auto V Legacy'},
-    {'user': 'il2ol8kp5fc0', 'pass': 'Uj5Ih3Jo5Lm7', 'game': 'Grand Theft Auto V Legacy'},
-    {'user': 'Ha5Lf1Mz1Ce1', 'pass': 'Au4Yt1Xp9Am4', 'game': 'Grand Theft Auto V Legacy'},
-    {'user': 'beys_7852', 'pass': 'Heel2002', 'game': 'Grand Theft Auto V Legacy'},
-    {'user': 'CANBAYR5M', 'pass': 'tazemail01', 'game': 'Steam Account'},
-    {'user': 'Ntatolo09', 'pass': 'ZXCVBNM.90', 'game': 'Grand Theft Auto V Legacy'},
-    {'user': 'artinaghaie', 'pass': 'ARTin13921', 'game': 'Grand Theft Auto V Legacy'},
-    {'user': 'jukk94', 'pass': 'Jucariee94', 'game': 'Grand Theft Auto V Legacy'},
-    {'user': 'andrettidre', 'pass': 'Percy180', 'game': 'Grand Theft Auto V Legacy'},
-    {'user': 'zmaloca', 'pass': '123Ponterasa123', 'game': 'Grand Theft Auto V Legacy'},
-    {'user': 'szqk907', 'pass': 'ajoK1993', 'game': 'Grand Theft Auto V Legacy'},
-    {'user': 'l3th4lkills', 'pass': 'muhaimin159357', 'game': 'Grand Theft Auto V Legacy'},
-    {'user': 'tangjie1978643857', 'pass': 'kyiCogfrXj', 'game': 'Grand Theft Auto V Legacy'},
-    {'user': 'jamespern2', 'pass': 'Bigjump20', 'game': 'Grand Theft Auto V Legacy'},
-    {'user': 'latte242007za01', 'pass': 'Thanisorn12', 'game': 'Grand Theft Auto V Legacy'},
-    {'user': 'noahtv098', 'pass': 'NoahTV12', 'game': 'Grand Theft Auto V Legacy'},
-    {'user': 'uwvehewx', 'pass': 'acqczzkv6Zrt', 'game': 'Grand Theft Auto V Legacy'},
-    {'user': 'kkcu3909', 'pass': 'PlayGame3.1.26', 'game': 'Grand Theft Auto V Legacy'},
-    {'user': 'alicgntoraman', 'pass': '200820132008', 'game': 'Grand Theft Auto V Legacy'},
-    {'user': 'alienlab1', 'pass': 'chelsea201nigga', 'game': 'Grand Theft Auto V Legacy'},
-    {'user': 'TheJulitoYt', 'pass': '1103505475', 'game': 'Grand Theft Auto V Legacy'},
-    {'user': 'matheus291207', 'pass': 'johomala4', 'game': 'Grand Theft Auto V Legacy'},
-    {'user': 'vostm80762', 'pass': 'nixk14958D', 'game': 'Forza Horizon 6'},
-    {'user': 'nafeyz227', 'pass': 'Hq123556', 'game': "Assassin's Creed Black Flag"},
-    {'user': 'unmqzvh1x6w3', 'pass': 'Scaction@@2026', 'game': 'EA SPORTS FC 26'},
-    {'user': 'dgwzg51904', 'pass': 'yusahan7@', 'game': 'The Texas Chain Saw Massacre'},
-    {'user': 'toferresident1', 'pass': 'Resident@1122', 'game': 'Resident Evil 4'},
-    {'user': 'egoros3p41', 'pass': 'siski33BFa9lCBU7O67483', 'game': 'Resident Evil Requiem'},
-    {'user': 'steamok1090115', 'pass': 'steamok36464652', 'game': 'Counter-Strike 2'},
-    {'user': 'sugardaddy0076', 'pass': 'SiTatkLCzDqbvyK', 'game': "Tom Clancy's Rainbow Six Siege"},
-    {'user': 'tebhy35660', 'pass': 'Okboomer100', 'game': 'EA SPORTS FC 26'},
-    {'user': 'tlger38147', 'pass': 'l24p5KCIEsh3', 'game': 'Left 4 Dead 2'},
-    {'user': 'tvfnp31656', 'pass': 'pmo090710', 'game': 'Counter-Strike 2'},
-    {'user': 'turxw96711', 'pass': 'wofps26557', 'game': 'DayZ'},
-    {'user': 'typux41215', 'pass': 'jokk33020N', 'game': 'Counter-Strike 2'},
-    {'user': 'udshp23299', 'pass': '4Duen78ksMfvj', 'game': 'EA SPORTS FC 26'},
-    {'user': 'uglydeer1764', 'pass': '02c7dbb09d91e9791!aZ', 'game': 'Counter-Strike 2'},
-    {'user': 'uqbah000', 'pass': 'uqbahdota', 'game': 'Counter-Strike 2'},
-    {'user': 'vdfk61114', 'pass': 'Garethbale11!', 'game': 'Counter-Strike 2'},
-    {'user': 'wznyj52220', 'pass': 'oflyq77352', 'game': 'Sons Of The Forest'},
-    {'user': 'xlco5u79h', 'pass': 'hdgaming@123', 'game': 'Counter-Strike 2'},
-    {'user': 'ycvsw30539', 'pass': 'ogue22576N', 'game': 'Counter-Strike 2'},
-    {'user': 'yula69721', 'pass': 'Pj1Zp2Kh9Qb26t', 'game': 'Counter-Strike 2'},
-    {'user': 'zestyTacos18415', 'pass': 't03EULbIhCSY', 'game': 'Counter-Strike 2'},
-    {'user': 'zwlmi26059', 'pass': 'euxs32929G', 'game': 'Rust'},
-    {'user': 'pmo91286', 'pass': 'zxc94877', 'game': 'Counter-Strike 2'},
-    {'user': 'papyyafka', 'pass': '71E7UkmGb0MIvq8', 'game': 'Counter-Strike 2'},
-    {'user': 'Il0Ys9Tb2Dl8', 'pass': 'Aj5Dz4En4Un7', 'game': 'Counter-Strike 2'},
-    {'user': 'MiSide18', 'pass': 'BloodRue-Shop-Mi', 'game': 'Counter-Strike 2'},
-    {'user': 'gabrielfrcd6', 'pass': 'SteamJ3#x', 'game': 'Counter-Strike 2'},
-    {'user': 'hasyn73382', 'pass': 'jwqe43571W', 'game': 'Counter-Strike 2'},
-    {'user': 'mlhao274948', 'pass': 'MyDcT644900', 'game': 'Counter-Strike 2'},
-    {'user': 'nohecorni1988', 'pass': 'nv6GJw1AFv1980', 'game': 'Counter-Strike 2'},
-    {'user': 'mosapoy10540', 'pass': 'marpanov_free21', 'game': 'Grand Theft Auto V Legacy'},
-    {'user': 'aboardmoth98933', 'pass': 'Tjddarcy11!', 'game': 'Counter-Strike 2'},
-    {'user': 'asser71220114', 'pass': 'Aser12712', 'game': 'Counter-Strike 2'},
-    {'user': 'is4ii6ik9kh6', 'pass': 'Kilian1297', 'game': 'ARK: Survival Evolved'},
-    {'user': '17261552', 'pass': '91019024', 'game': 'Counter-Strike 2'},
-    {'user': 'arimb76284', 'pass': 'mivo63928V', 'game': 'Counter-Strike 2'},
-    {'user': 'rzaei96043', 'pass': 'aihz54300L', 'game': 'Counter-Strike 2'},
-    {'user': 'piwrbwlq', 'pass': 't1p8w4v6', 'game': 'Counter-Strike 2'},
-    {'user': 'abortivelamechamois', 'pass': 'Quietedge24', 'game': 'Counter-Strike 2'},
-    {'user': 'widecanid6152', 'pass': 'c3b0bc16d08708211!aZ', 'game': 'Counter-Strike 2'},
-    {'user': 'UBER3786', 'pass': 'zRR^h43Rv1rLR', 'game': 'Counter-Strike 2'},
-    {'user': 'efficaciousdisturbedmallard', 'pass': 'Thinleaf53', 'game': 'Counter-Strike 2'},
-    {'user': 'SolidAbsorbingWhale', 'pass': 'Bravesilk56', 'game': 'Counter-Strike 2'},
-    {'user': 'LackadaisicalJoblessFly', 'pass': 'Freshfox93', 'game': 'Counter-Strike 2'},
-    {'user': 'xaphan0001', 'pass': '485701793410A', 'game': 'Counter-Strike 2'},
-    {'user': 'eaw1sdf', 'pass': 'motherfuck00', 'game': 'Vegas Infinite'},
-    {'user': 'kennelxenon52', 'pass': 'sLyOXgh26Ruo', 'game': 'Counter-Strike 2'},
-    {'user': 'compa_oscarrr', 'pass': 'VAOLJIdytgap', 'game': 'Crosshair X'},
-    {'user': 'dmccl47501', 'pass': 'https://funpay.com/users/11580680/', 'game': 'Resident Evil Requiem'},
-    {'user': 'nrbkr70913', 'pass': 'zjjqg11385', 'game': "Marvel's Spider-Man 2"},
-    {'user': 'fmfdh768618', 'pass': 'JxOlD541496', 'game': 'Grand Theft Auto V Legacy'},
-    {'user': 'arenda9126', 'pass': 'Ytrnj275', 'game': 'Forza Horizon 6'},
-    {'user': 'Orenda311', 'pass': 'VGJ876gjgift4567FDCFggfgytdsR', 'game': 'God of War Ragnarok'},
-    {'user': 'whisperingbarnacle95403', 'pass': 'LavCrewMan03!#', 'game': 'Steam Account'},
-    {'user': 'godpris@mail.dk', 'pass': 'Oscar737', 'game': 'Steam Account'},
-    {'user': 'demeguszti@freemail.hu', 'pass': 'Pajtikutyus1976', 'game': 'Steam Account'},
-    {'user': 'kerike29@freemail.hu', 'pass': 'Nagyati0308', 'game': 'Steam Account'},
-    {'user': 'debode@freemail.hu', 'pass': 'machetas00', 'game': 'Steam Account'},
-    {'user': 's.jezus@freemail.hu', 'pass': 'jesszuszPQ12', 'game': 'Steam Account'},
-    {'user': 'l.davidd@freemail.hu', 'pass': 'Gaborka1221', 'game': 'Steam Account'},
-    {'user': 'yyalr@yandex.com', 'pass': 'mxdehzkizqzoondi', 'game': 'Steam Account'},
-    {'user': 'joysscott@yandex.com', 'pass': 'jwcsixnjnggerfef', 'game': 'Steam Account'},
-    {'user': 'byronmiiller@yandex.ru', 'pass': 'uitubmgaznvynhsc', 'game': 'Steam Account'},
-    {'user': 'tiaaburke@yandex.ru', 'pass': 'dvlyovqwbmzoepeo', 'game': 'Steam Account'},
-    {'user': 'jorgerose@yandex.com', 'pass': 'qavyznihpjlpwsqs', 'game': 'Steam Account'},
-    {'user': 'julia.tolkacheva.666@yandex.ru', 'pass': 'nlidnwazhidnljtk', 'game': 'Steam Account'},
-    {'user': 'dev1234543210@yandex.ru', 'pass': 'guvukocnpsmdpqnn', 'game': 'Steam Account'},
-    {'user': 'orladean@yandex.ru', 'pass': 'loliimajloubctcm', 'game': 'Steam Account'},
-    {'user': 'milapitts@yandex.ru', 'pass': 'jnpipfzfmplxlkok', 'game': 'Steam Account'},
-    {'user': 'mamypokopants@yandex.ru', 'pass': 'gorwijvdchyocnkj', 'game': 'Steam Account'},
-    {'user': 'carllevy@yandex.ru', 'pass': 'bcsyyhxzudnwgnyz', 'game': 'Steam Account'},
-    {'user': 'andreenwil@versatel.nl', 'pass': 'andre2400', 'game': 'Steam Account'},
-    {'user': 'luyman2404@movistar.es', 'pass': 'sofalevape', 'game': 'Steam Account'},
-    {'user': 'mjcchicoa@movistar.es', 'pass': 'chicoa1202', 'game': 'Steam Account'},
-    {'user': 'carllevy@ya.ru', 'pass': 'bcsyyhxzudnwgnyz', 'game': 'Steam Account'},
-    {'user': 'herexlaku@ya.ru', 'pass': 'urgkyyweqbytyame', 'game': 'Steam Account'},
-    {'user': 'bluipantor@ya.ru', 'pass': 'eheldghouuuwgewo', 'game': 'Steam Account'},
-    {'user': 'orladean@ya.ru', 'pass': 'loliimajloubctcm', 'game': 'Steam Account'},
-    {'user': 'langgina@ya.ru', 'pass': 'plmpmcfaaqiwkuxr', 'game': 'Steam Account'},
-    {'user': 'milapitts@ya.ru', 'pass': 'jnpipfzfmplxlkok', 'game': 'Steam Account'},
-    {'user': 'julia.tolkacheva.666@ya.ru', 'pass': 'nlidnwazhidnljtk', 'game': 'Steam Account'},
-    {'user': 'jla99002@telefonica.net', 'pass': '!Jla99002', 'game': 'Steam Account'},
-    {'user': 'pjferroni@terra.com.br', 'pass': 'Solzinha40@', 'game': 'Steam Account'},
-    {'user': 'sensi1@telefonica.net', 'pass': 'chispa', 'game': 'Steam Account'},
-    {'user': 'rodrigojosefreitas@bol.com.br', 'pass': '#satierf1981', 'game': 'Steam Account'},
-    {'user': '58786917', 'pass': '25925863', 'game': 'Spider-Man: Miles Morales'},
-    {'user': 'aegorovsio41', 'pass': 'siski70oO4iI9uU3yY8tT2rR7eE', 'game': 'Resident Evil Requiem'},
-    {'user': 'tronghp1234', 'pass': 'Tronghp1232334@', 'game': 'Black Myth Wukong'},
-    {'user': 'jvaag15694', 'pass': 'otuu60772Z', 'game': 'Black Myth Wukong'},
-    {'user': 'marcuscox2p', 'pass': 'nku6wbav', 'game': 'Black Myth Wukong'},
-    {'user': 'hoangnha140203', 'pass': 'hoangnha112233', 'game': 'WWE 2K22'},
-    {'user': 'abdullah_kwt21', 'pass': 'Kuwait@22', 'game': 'Steam Account'},
-    {'user': '5114599039', 'pass': '0797484206', 'game': 'Steam Account'},
-    {'user': 'rostokrrfan1', 'pass': 'alpharacer54', 'game': 'Steam Account'},
-    {'user': '2vff29ne', 'pass': 'eoojdisn', 'game': 'Steam Account'},
-    {'user': 'Ah5Vc2Oa4Dh0', 'pass': 'Paul100h1996', 'game': 'Steam Account'},
-    {'user': 'jhonatan_santos3', 'pass': 'jhonatan952137', 'game': 'Steam Account'},
-    {'user': 'bcpc_dyinglight2_0001', 'pass': 'QwYLVG2ptDQkp7jL', 'game': 'Dying Light 2'},
-    {'user': '4bdb0e2d', 'pass': 'QAzAS7W6', 'game': 'Dying Light 2: Reloaded Edition'},
-    {'user': '3497875991', 'pass': 'ftla1719', 'game': 'Steam Account'},
-    {'user': 'hnkl51679', 'pass': '@C2329123d050716', 'game': 'Steam Account'},
-    {'user': 'takla_swamijii07', 'pass': 'Tsgame24', 'game': 'Steam Account'},
-    {'user': 'dv6fr6st9mq0', 'pass': 'Sn4Ff5Wt6Fc1', 'game': 'Red Dead Redemption 2'},
-    {'user': 'cnykqx48s', 'pass': 'Progamer@', 'game': 'Steam Account'},
-    {'user': '46mickey46', 'pass': 'Cosmin69', 'game': 'MotoGP 18'},
-    {'user': 'c21282', 'pass': 'asdAVXab21Z', 'game': 'Cyberpunk 2077'},
-    {'user': 'pbred4', 'pass': 'PrezleyB0', 'game': 'Bendy and the Ink Machine'},
-    {'user': 'dhortelio', 'pass': '28*09*04', 'game': 'Construction Simulator'},
-    {'user': 'gamerzeygx', 'pass': 't.me\\xoovt', 'game': 'Red Dead Redemption 2'},
 ]
 
 # ============================================================
@@ -288,15 +155,14 @@ intents.message_content = True
 class SteamBot(commands.Bot):
     def __init__(self):
         super().__init__(command_prefix='!', intents=intents)
-        self.synced = False
 
     async def setup_hook(self):
         await self.tree.sync()
-        self.synced = True
         print(f'✅ {self.user} olarak giriş yapıldı!')
         print(f'📊 Toplam {len(steam_accounts)} hesap yüklendi!')
 
 bot = SteamBot()
+
 SOON_GIF = 'https://media.tenor.com/LqPwUfj3fwMAAAAM/puppet-red.gif'
 
 async def get_steam_game_image(game_name):
@@ -555,4 +421,8 @@ async def account_count(interaction: discord.Interaction):
 
 if __name__ == "__main__":
     print("🚀 Bot başlatılıyor...")
-    bot.run(TOKEN)
+    try:
+        bot.run(TOKEN)
+    except Exception as e:
+        print(f"❌ Bot başlatılamadı: {e}")
+        sys.exit(1)
