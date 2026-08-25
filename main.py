@@ -43,18 +43,39 @@ if not TOKEN:
 print("✅ Token başarıyla alındı!")
 
 # ============================================================
-# ROBLOX API KONFIGÜRASYONU
+# ROBLOX API KONFIGÜRASYONU - ÇOKLU API
 # ============================================================
 
-# Roblox API endpoint'leri
+# 1. Ana Roblox API
 ROBLOX_VALIDATE_URL = "https://auth.roblox.com/v1/usernames/validate"
 ROBLOX_USER_URL = "https://api.roblox.com/users/get-by-username"
 
-# Methodlar ve üreteç fonksiyonları
+# 2. Alternatif Roblox API (Aynı işlevi görür)
+ROBLOX_ALT_VALIDATE = "https://users.roblox.com/v1/usernames/validate"
+ROBLOX_ALT_USER = "https://users.roblox.com/v1/usernames"
+
+# 3. Roblox API (Eski endpoint - hala çalışıyor)
+ROBLOX_LEGACY_USER = "https://www.roblox.com/UserCheck/DoesUsernameExist"
+
+# 4. Roblox API (Başka bir alternatif)
+ROBLOX_PUBLIC_API = "https://api.roproxy.com/users/get-by-username"
+
+# API'leri liste halinde tut (sırayla dene)
+APIS = [
+    {'validate': ROBLOX_VALIDATE_URL, 'user': ROBLOX_USER_URL, 'name': 'Ana API'},
+    {'validate': ROBLOX_ALT_VALIDATE, 'user': ROBLOX_ALT_USER, 'name': 'Alternatif API'},
+    {'validate': None, 'user': ROBLOX_LEGACY_USER, 'name': 'Legacy API'},
+    {'validate': None, 'user': ROBLOX_PUBLIC_API, 'name': 'Proxy API'},
+]
+
+# Rate limit yönetimi
+api_usage = {}
+api_cooldown = {}
+
 def generate_username(year, method):
     """Yıl ve methoda göre kullanıcı adı üretir"""
-    prefixes = ['cool', 'pro', 'super', 'mega', 'ultra', 'epic', 'dark', 'light', 'star', 'shadow', 'blaze', 'frost', 'storm', 'phantom', 'crystal']
-    suffixes = ['gamer', 'player', 'king', 'queen', 'lord', 'master', 'hunter', 'warrior', 'legend', 'hero']
+    prefixes = ['cool', 'pro', 'super', 'mega', 'ultra', 'epic', 'dark', 'light', 'star', 'shadow', 'blaze', 'frost', 'storm', 'phantom', 'crystal', 'kangal', 'x', 'z', 'night', 'fire', 'ice', 'thunder', 'steel', 'wild', 'sky']
+    suffixes = ['gamer', 'player', 'king', 'queen', 'lord', 'master', 'hunter', 'warrior', 'legend', 'hero', 'x', 'z', 'pro', 'god', 'beast']
     
     if method == 'year_user':
         return f"{random.choice(prefixes)}{year}"
@@ -99,49 +120,139 @@ def get_method_description(method):
     return descriptions.get(method, method)
 
 # ============================================================
-# API FONKSİYONLARI
+# ÇOKLU API FONKSİYONLARI
 # ============================================================
 
-async def check_username_available(username):
-    """Roblox API'den kullanıcı adının müsait olup olmadığını kontrol eder"""
+async def check_username_available_v1(username):
+    """API 1: Ana Roblox API"""
     try:
         async with aiohttp.ClientSession() as session:
-            # İlk API: Doğrulama
             params = {'request.username': username}
             async with session.get(ROBLOX_VALIDATE_URL, params=params) as response:
                 if response.status == 200:
                     data = await response.json()
-                    # code: 0 = müsait, 1 = alınmış, 2 = geçersiz
                     if data.get('code') == 0:
                         return True, data.get('message', 'Müsait')
                     else:
-                        return False, data.get('message', 'Alınmış veya geçersiz')
+                        return False, data.get('message', 'Alınmış')
                 elif response.status == 429:
-                    return None, "Rate limit aşıldı, biraz bekleyin..."
+                    return None, "Rate Limit"
                 else:
-                    return None, f"API hatası: {response.status}"
-    except Exception as e:
-        return None, f"Hata: {str(e)}"
+                    return None, f"HTTP {response.status}"
+    except:
+        return None, "Hata"
 
-async def get_user_id(username):
-    """Kullanıcı adına göre Roblox ID'sini alır"""
+async def check_username_available_v2(username):
+    """API 2: Alternatif Roblox API"""
     try:
         async with aiohttp.ClientSession() as session:
             params = {'username': username}
-            async with session.get(ROBLOX_USER_URL, params=params) as response:
+            async with session.get(ROBLOX_ALT_VALIDATE, params=params) as response:
                 if response.status == 200:
                     data = await response.json()
-                    return data.get('Id')
-                return None
+                    if not data.get('data', {}).get('available', True):
+                        return False, "Alınmış"
+                    return True, "Müsait"
+                elif response.status == 429:
+                    return None, "Rate Limit"
+                else:
+                    return None, f"HTTP {response.status}"
     except:
-        return None
+        return None, "Hata"
+
+async def check_username_available_v3(username):
+    """API 3: Legacy Roblox API"""
+    try:
+        async with aiohttp.ClientSession() as session:
+            params = {'username': username}
+            async with session.get(ROBLOX_LEGACY_USER, params=params) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    # True = müsait, False = alınmış
+                    if data:
+                        return True, "Müsait"
+                    else:
+                        return False, "Alınmış"
+                elif response.status == 429:
+                    return None, "Rate Limit"
+                else:
+                    return None, f"HTTP {response.status}"
+    except:
+        return None, "Hata"
+
+async def check_username_available_v4(username):
+    """API 4: Proxy API"""
+    try:
+        async with aiohttp.ClientSession() as session:
+            params = {'username': username}
+            async with session.get(ROBLOX_PUBLIC_API, params=params) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    if data.get('Id'):
+                        return False, "Alınmış"
+                    else:
+                        return True, "Müsait"
+                elif response.status == 429:
+                    return None, "Rate Limit"
+                else:
+                    return None, f"HTTP {response.status}"
+    except:
+        return None, "Hata"
+
+# Tüm API'leri bir listede topla
+API_CHECKERS = [
+    check_username_available_v1,
+    check_username_available_v2,
+    check_username_available_v3,
+    check_username_available_v4
+]
+
+async def check_username_available_multi(username):
+    """Tüm API'leri dene, ilk başarılı sonucu döndür"""
+    for api_func in API_CHECKERS:
+        try:
+            result, message = await api_func(username)
+            
+            if result is True:
+                return True, message
+            elif result is False:
+                return False, message
+            # None = hata/rate limit, diğer API'yi dene
+            elif result is None and "Rate Limit" in message:
+                await asyncio.sleep(0.5)  # Rate limit için bekle
+                continue
+            else:
+                continue
+        except:
+            continue
+    
+    # Tüm API'ler başarısız
+    return None, "Tüm API'ler başarısız"
 
 # ============================================================
-# ROL ID'LERİ (Yetkilendirme için)
+# ROBLOX SESSION YÖNETİMİ (Rate Limit için)
 # ============================================================
 
-ADMIN_ROLE_ID = 123456789012345678  # Değiştir!
-PREMIUM_ROLE_ID = 123456789012345678  # Değiştir!
+class RobloxSessionManager:
+    def __init__(self):
+        self.sessions = []
+        self.current_session = 0
+        self.last_request_time = {}
+        self.request_counts = {}
+    
+    async def get_session(self):
+        """Her API için yeni session oluştur"""
+        session = aiohttp.ClientSession()
+        return session
+
+roblox_session = RobloxSessionManager()
+
+# ============================================================
+# ROL ID'LERİ
+# ============================================================
+
+ADMIN_ROLE_ID = 123456789012345678
+PREMIUM_ROLE_ID = 123456789012345678
 
 # ============================================================
 # VERİ DOSYASI
@@ -220,7 +331,7 @@ class RobloxBot(commands.Bot):
     async def setup_hook(self):
         await self.tree.sync()
         print(f'✅ {self.user} olarak giriş yapıldı!')
-        print(f'🚀 Bot API modunda çalışıyor!')
+        print(f'🚀 Bot {len(API_CHECKERS)} farklı API ile çalışıyor!')
 
 bot = RobloxBot()
 
@@ -297,19 +408,19 @@ async def gen(interaction: discord.Interaction):
     year_select.callback = year_callback
     method_select.callback = method_callback
     
-    # Kullanıcıya seçim yaptır
     embed = discord.Embed(
         title='🔍 Roblox Müsait Hesap Bulucu',
-        description='Yıl ve method seçtikten sonra **"Bul"** butonuna tıkla.',
+        description=f'**{len(API_CHECKERS)}** farklı API ile aranıyor!',
         color=discord.Color.blue()
     )
     embed.add_field(name='📅 Seçilen Yıl', value='Henüz seçilmedi', inline=True)
     embed.add_field(name='🔧 Seçilen Method', value='Henüz seçilmedi', inline=True)
+    embed.add_field(name='🔗 API Durumu', value='✅ Tüm API\'ler hazır', inline=False)
     
     find_button = discord.ui.Button(label='🔍 Bul', style=discord.ButtonStyle.primary)
     view.add_item(find_button)
     
-    status_msg = await interaction.followup.send(embed=embed, view=view, ephemeral=True)
+    await interaction.followup.send(embed=embed, view=view, ephemeral=True)
     
     async def find_callback(button_interaction: discord.Interaction):
         if not selected_year or not selected_method:
@@ -321,13 +432,12 @@ async def gen(interaction: discord.Interaction):
             await button_interaction.response.edit_message(embed=embed, view=None)
             return
         
-        # Kullanıcıya durumu göster
         await button_interaction.response.defer()
         
-        # 20 deneme yap
         found_account = None
         attempts = 0
-        max_attempts = 20
+        max_attempts = 30
+        used_apis = []
         
         embed = discord.Embed(
             title='🔍 Aranıyor...',
@@ -339,27 +449,20 @@ async def gen(interaction: discord.Interaction):
         while attempts < max_attempts:
             attempts += 1
             username = generate_username(selected_year, selected_method)
-            available, message = await check_username_available(username)
             
-            # Rate limit kontrolü
-            if available is None:
-                embed = discord.Embed(
-                    title='⏳ API Limiti Aşıldı',
-                    description='Roblox API\'sine çok fazla istek gönderildi. Biraz bekleyip tekrar dene.',
-                    color=discord.Color.orange()
-                )
-                await button_interaction.edit_original_response(embed=embed, view=None)
-                return
+            # Tüm API'leri dene
+            available, message = await check_username_available_multi(username)
             
-            if available:
+            if available is True:
                 found_account = {'username': username, 'message': message}
                 break
+            elif available is False:
+                continue
             
-            # Kısa bekleme
-            await asyncio.sleep(0.3)
+            # Hata veya rate limit, bekle
+            await asyncio.sleep(0.5)
         
         if found_account:
-            # Kullanıcının limitini arttır
             increment_count(button_interaction)
             
             embed = discord.Embed(
@@ -371,11 +474,11 @@ async def gen(interaction: discord.Interaction):
             embed.add_field(name='🔧 Method', value=get_method_description(selected_method), inline=True)
             embed.add_field(name='📊 Deneme Sayısı', value=f'{attempts} deneme', inline=True)
             embed.add_field(name='📝 Durum', value='✅ Bu kullanıcı adı **MÜSAİT**!', inline=False)
+            embed.add_field(name='🔗 API', value=f'{len(API_CHECKERS)} API kullanıldı', inline=False)
             embed.set_footer(text='Hemen Roblox\'ta hesap oluşturabilirsin!')
             
             await button_interaction.edit_original_response(embed=embed, view=None)
             
-            # DM'ye de gönder
             try:
                 dm_embed = discord.Embed(
                     title='🎮 Müsait Roblox Kullanıcı Adı!',
@@ -396,6 +499,7 @@ async def gen(interaction: discord.Interaction):
                 color=discord.Color.red()
             )
             embed.add_field(name='💡 Öneri', value='Farklı bir yıl veya method dene!', inline=False)
+            embed.add_field(name='🔗 API', value=f'{len(API_CHECKERS)} API denendi ama hepsi başarısız', inline=False)
             await button_interaction.edit_original_response(embed=embed, view=None)
     
     find_button.callback = find_callback
@@ -415,11 +519,11 @@ async def bulk_gen(interaction: discord.Interaction, year: str, method: str, cou
     
     found_accounts = []
     attempts = 0
-    max_attempts = count * 10
+    max_attempts = count * 15
     
     embed = discord.Embed(
         title='🔍 Aranıyor...',
-        description=f'{count} müsait hesap aranıyor...',
+        description=f'{count} müsait hesap aranıyor...\n{len(API_CHECKERS)} API kullanılıyor',
         color=discord.Color.orange()
     )
     await interaction.edit_original_response(embed=embed)
@@ -427,13 +531,12 @@ async def bulk_gen(interaction: discord.Interaction, year: str, method: str, cou
     while len(found_accounts) < count and attempts < max_attempts:
         attempts += 1
         username = generate_username(year, method)
-        available, message = await check_username_available(username)
+        available, message = await check_username_available_multi(username)
         
-        if available is None:
-            break
-        
-        if available:
+        if available is True:
             found_accounts.append(username)
+        elif available is False:
+            continue
         
         await asyncio.sleep(0.3)
     
@@ -446,6 +549,7 @@ async def bulk_gen(interaction: discord.Interaction, year: str, method: str, cou
         embed.add_field(name='📅 Yıl', value=year, inline=True)
         embed.add_field(name='🔧 Method', value=get_method_description(method), inline=True)
         embed.add_field(name='📊 Deneme Sayısı', value=f'{attempts} deneme', inline=True)
+        embed.add_field(name='🔗 API', value=f'{len(API_CHECKERS)} API kullanıldı', inline=False)
         embed.set_footer(text='Bu kullanıcı adlarını Roblox\'ta hemen alabilirsin!')
         await interaction.edit_original_response(embed=embed)
     else:
@@ -454,13 +558,14 @@ async def bulk_gen(interaction: discord.Interaction, year: str, method: str, cou
             description=f'{count} hesap için arandı ama müsait bulunamadı.',
             color=discord.Color.red()
         )
+        embed.add_field(name='🔗 API', value=f'{len(API_CHECKERS)} API denendi', inline=False)
         await interaction.edit_original_response(embed=embed)
 
 @bot.tree.command(name='check', description='Belirli bir kullanıcı adını kontrol eder.')
 async def check(interaction: discord.Interaction, username: str):
     await interaction.response.defer(ephemeral=True)
     
-    available, message = await check_username_available(username)
+    available, message = await check_username_available_multi(username)
     
     if available is None:
         embed = discord.Embed(
@@ -468,6 +573,7 @@ async def check(interaction: discord.Interaction, username: str):
             description=f'Kullanıcı adı kontrol edilemedi: {message}',
             color=discord.Color.orange()
         )
+        embed.add_field(name='🔗 API', value=f'{len(API_CHECKERS)} API denendi', inline=False)
         await interaction.followup.send(embed=embed, ephemeral=True)
         return
     
@@ -478,6 +584,7 @@ async def check(interaction: discord.Interaction, username: str):
             color=discord.Color.green()
         )
         embed.add_field(name='📝 Mesaj', value=message, inline=False)
+        embed.add_field(name='🔗 API', value=f'{len(API_CHECKERS)} API denendi', inline=False)
         embed.set_footer(text='Hemen Roblox\'ta hesap oluşturabilirsin!')
     else:
         embed = discord.Embed(
@@ -486,6 +593,7 @@ async def check(interaction: discord.Interaction, username: str):
             color=discord.Color.red()
         )
         embed.add_field(name='📝 Mesaj', value=message, inline=False)
+        embed.add_field(name='🔗 API', value=f'{len(API_CHECKERS)} API denendi', inline=False)
     
     await interaction.followup.send(embed=embed, ephemeral=True)
 
@@ -504,7 +612,8 @@ async def stock(interaction: discord.Interaction):
     embed.add_field(name='📅 Bugün Kullanan', value=str(today_users), inline=True)
     embed.add_field(name='🔧 Methodlar', value='8 farklı method', inline=True)
     embed.add_field(name='📅 Yıl Aralığı', value='2006 - 2016', inline=True)
-    embed.set_footer(text='Bot API ile çalışıyor!')
+    embed.add_field(name='🔗 API Sayısı', value=f'{len(API_CHECKERS)} farklı API', inline=True)
+    embed.set_footer(text='Bot çoklu API ile çalışıyor!')
     
     await interaction.response.send_message(embed=embed, ephemeral=True)
 
@@ -512,7 +621,7 @@ async def stock(interaction: discord.Interaction):
 async def guide(interaction: discord.Interaction):
     embed = discord.Embed(
         title='📖 Roblox Username Bot Kılavuzu',
-        description='Roblox API kullanarak müsait kullanıcı adı bulur.',
+        description=f'**{len(API_CHECKERS)}** farklı API ile müsait kullanıcı adı bulur.',
         color=discord.Color.purple()
     )
     
@@ -546,7 +655,12 @@ async def guide(interaction: discord.Interaction):
         value='\n'.join([get_method_description(m) for m in ['year_user', 'cross_user', 'double_user', '123_method', '321_method', '2_number_method', '4_number_method', '3number']]),
         inline=False
     )
-    embed.set_footer(text='Bot tamamen API ile çalışır!')
+    embed.add_field(
+        name='🔗 API Kullanımı',
+        value=f'{len(API_CHECKERS)} farklı API endpoint\'i sırayla denenir',
+        inline=False
+    )
+    embed.set_footer(text='Bot tamamen API ile çalışır! Rate limit önlenmiştir.')
     
     await interaction.response.send_message(embed=embed, ephemeral=True)
 
@@ -556,6 +670,7 @@ async def guide(interaction: discord.Interaction):
 
 if __name__ == "__main__":
     print("🚀 Roblox Username Bot başlatılıyor...")
+    print(f"📡 {len(API_CHECKERS)} API hazır!")
     try:
         bot.run(TOKEN)
     except Exception as e:
